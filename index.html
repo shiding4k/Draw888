@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>活動登陸轉址系統</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding-top: 100px;
+            background-color: #f4f4f9;
+        }
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        h1 { color: #333; }
+        .error { color: #e74c3c; font-weight: bold; font-size: 1.2em; }
+        .success { color: #2ecc71; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2 id="status-title">正在驗證您的現場身分...</h2>
+        <p id="status-desc">請稍候，系統正在確認您是否在服務台現場。</p>
+    </div>
+
+    <script>
+        // https://forms.gle/fsew5fhy9DcG1QP3A
+        const targetFormUrl = "https://your-google-form-url-here"; 
+        
+        // 設定 QR Code 的有效時限（單位：秒，這裡設定 60 秒）
+        const expireSeconds = 60; 
+
+        // 取得網址參數中的時間戳記 (t)
+        const urlParams = new URLSearchParams(window.location.search);
+        const qrcodeTime = parseInt(urlParams.get('t')); // 這是秒級時間戳記
+
+        const currentTime = Math.floor(Date.now() / 1000); // 取得手機當前時間
+
+        const statusTitle = document.getElementById('status-title');
+        const statusDesc = document.getElementById('status-desc');
+
+        if (!qrcodeTime || isNaN(qrcodeTime)) {
+            // 如果網址沒有帶時間參數，直接拒絕
+            statusTitle.innerHTML = "驗證失敗";
+            statusTitle.className = "error";
+            statusDesc.innerHTML = "無效的掃描方式，請至服務台現場掃描動態 QR Code。";
+        } else if (currentTime - qrcodeTime > expireSeconds) {
+            // 如果時間差大於設定秒數，判定為過期（過期或拍回家掃）
+            statusTitle.innerHTML = "QR Code 已過期";
+            statusTitle.className = "error";
+            statusDesc.innerHTML = "此條碼已失效（超過 60 秒），請在服務台螢幕前重新掃描。";
+        } else {
+            // 驗證通過，準備跳轉
+            statusTitle.innerHTML = "驗證成功！";
+            statusTitle.className = "success";
+            statusDesc.innerHTML = "正在為您安全導向至登陸表單...";
+            
+            // 1.5 秒後自動跳轉到 Google 表單
+            setTimeout(() => {
+                window.location.href = targetFormUrl;
+            }, 1500);
+        }
+    </script>
+</body>
+</html>
