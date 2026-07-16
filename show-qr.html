@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <title>服務台動態 QR Code 展示</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #2c3e50;
+            color: white;
+            padding-top: 50px;
+        }
+        #qrcode-container {
+            background: white;
+            padding: 20px;
+            display: inline-block;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+        #timer {
+            font-size: 1.5em;
+            color: #f1c40f;
+            margin-top: 10px;
+        }
+    </style>
+    <!-- 引入免費的 QR Code 產生庫 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+</head>
+<body>
+    <h1>請掃描 QR Code 登陸發票</h1>
+    <p>⚠️ 為防弊端，本條碼每 60 秒自動更新一次，請當場掃描</p>
+    
+    <div id="qrcode-container">
+        <div id="qrcode"></div>
+    </div>
+    
+    <div id="timer">條碼更新倒數：<span id="seconds">60</span> 秒</div>
+
+    <script>
+        // https://shiding4k.github.io/Draw888/
+        const baseRedirectUrl = "https://你的帳號.github.io/lucky-draw/"; 
+        
+        const qrcodeElement = document.getElementById("qrcode");
+        const secondsElement = document.getElementById("seconds");
+        let qrcode = new QRCode(qrcodeElement, { width: 300, height: 300 });
+        let timeLeft = 60;
+
+        function updateQRCode() {
+            // 取得當前時間戳記（秒）
+            const timestamp = Math.floor(Date.now() / 1000);
+            // 組合出帶有時間戳記的轉址網址
+            const finalUrl = `${baseRedirectUrl}?t=${timestamp}`;
+            
+            // 重新產生 QR Code
+            qrcode.clear();
+            qrcode.makeCode(finalUrl);
+            
+            console.log("更新 QR Code:", finalUrl);
+        }
+
+        // 倒數計時器
+        setInterval(() => {
+            timeLeft--;
+            secondsElement.textContent = timeLeft;
+            if (timeLeft <= 0) {
+                updateQRCode();
+                timeLeft = 60;
+            }
+        }, 1000);
+
+        // 網頁開啟時立刻產生第一個
+        updateQRCode();
+    </script>
+</body>
+</html>
