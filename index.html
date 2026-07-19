@@ -24,6 +24,45 @@
         .success { color: #2ecc71; }
     </style>
 </head>
+    <script>
+    window.addEventListener('DOMContentLoaded', () => {
+        // 1. 取得網址中的參數 ?t=xxxx
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlTime = parseInt(urlParams.get('t'), 10);
+        
+        // 2. 取得使用者手機目前的系統時間戳記 (單位：秒)
+        const nowTime = Math.floor(Date.now() / 1000);
+        
+        // 3. 設定容許的緩衝時間（建議 90 秒）
+        // 註：設 90 秒是考慮到有人在條碼倒數最後幾秒才掃描，加上網路載入需要時間
+        const expiryLimit = 90; 
+
+        // 4. 開始驗證防弊
+        if (!urlTime || isNaN(urlTime)) {
+            // 狀況 A：網址沒有帶 t 參數（使用者自己打網址，或是從瀏覽器歷史紀錄點進來的）
+            alert("無效的進入方式，請至現場重新掃描最新的 QR Code！");
+            document.body.innerHTML = `
+                <div style="text-align:center; margin-top:20%; font-family:sans-serif; padding:20px;">
+                    <h1 style="color:#e74c3c; font-size:2em;">❌ 拒絕存取</h1>
+                    <p style="color:#7f8c8d; font-size:1.2em;">本活動僅限現場掃描動態 QR Code 參與，請勿直接連結。</p>
+                </div>
+            `;
+        } else if (nowTime - urlTime > expiryLimit) {
+            // 狀況 B：手機時間比網址時間多了超過 90 秒（代表他是拿舊的截圖或過期連結）
+            alert("該 QR Code 已過期，請掃描現場畫面上最新的條碼！");
+            document.body.innerHTML = `
+                <div style="text-align:center; margin-top:20%; font-family:sans-serif; padding:20px;">
+                    <h1 style="color:#e67e22; font-size:2em;">⏰ 條碼已過期</h1>
+                    <p style="color:#7f8c8d; font-size:1.2em;">現場條碼每 60 秒更新一次，請刷新大螢幕並重新掃描。</p>
+                </div>
+            `;
+        } else {
+            // 狀況 C：驗證通過！正常執行你原本的抽獎網頁內容
+            console.log("驗證成功，歡迎參加抽獎！");
+        }
+    });
+</script>
+</script>
 <body>
     <div class="container">
         <h2 id="status-title">正在驗證您的現場身分...</h2>
