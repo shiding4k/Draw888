@@ -19,50 +19,11 @@
             border-radius: 10px;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
-        h1 { color: #333; }
-        .error { color: #e74c3c; font-weight: bold; font-size: 1.2em; }
-        .success { color: #2ecc71; }
+        h2 { color: #333; }
+        .error { color: #e74c3c; font-weight: bold; font-size: 1.5em; }
+        .success { color: #2ecc71; font-weight: bold; font-size: 1.5em; }
     </style>
 </head>
-    <script>
-    window.addEventListener('DOMContentLoaded', () => {
-        // 1. 取得網址中的參數 ?t=xxxx
-        const urlParams = new URLSearchParams(window.location.search);
-        const urlTime = parseInt(urlParams.get('t'), 10);
-        
-        // 2. 取得使用者手機目前的系統時間戳記 (單位：秒)
-        const nowTime = Math.floor(Date.now() / 1000);
-        
-        // 3. 設定容許的緩衝時間（建議 90 秒）
-        // 註：設 90 秒是考慮到有人在條碼倒數最後幾秒才掃描，加上網路載入需要時間
-        const expiryLimit = 90; 
-
-        // 4. 開始驗證防弊
-        if (!urlTime || isNaN(urlTime)) {
-            // 狀況 A：網址沒有帶 t 參數（使用者自己打網址，或是從瀏覽器歷史紀錄點進來的）
-            alert("無效的進入方式，請至現場重新掃描最新的 QR Code！");
-            document.body.innerHTML = `
-                <div style="text-align:center; margin-top:20%; font-family:sans-serif; padding:20px;">
-                    <h1 style="color:#e74c3c; font-size:2em;">❌ 拒絕存取</h1>
-                    <p style="color:#7f8c8d; font-size:1.2em;">本活動僅限現場掃描動態 QR Code 參與，請勿直接連結。</p>
-                </div>
-            `;
-        } else if (nowTime - urlTime > expiryLimit) {
-            // 狀況 B：手機時間比網址時間多了超過 90 秒（代表他是拿舊的截圖或過期連結）
-            alert("該 QR Code 已過期，請掃描現場畫面上最新的條碼！");
-            document.body.innerHTML = `
-                <div style="text-align:center; margin-top:20%; font-family:sans-serif; padding:20px;">
-                    <h1 style="color:#e67e22; font-size:2em;">⏰ 條碼已過期</h1>
-                    <p style="color:#7f8c8d; font-size:1.2em;">現場條碼每 60 秒更新一次，請刷新大螢幕並重新掃描。</p>
-                </div>
-            `;
-        } else {
-            // 狀況 C：驗證通過！正常執行你原本的抽獎網頁內容
-            console.log("驗證成功，歡迎參加抽獎！");
-        }
-    });
-</script>
-</script>
 <body>
     <div class="container">
         <h2 id="status-title">正在驗證您的現場身分...</h2>
@@ -70,41 +31,59 @@
     </div>
 
     <script>
-        // hhttps://shiding4k.github.io/Draw888/
+        // 目標 Google 表單網址
         const targetFormUrl = "https://forms.gle/hpZ8QvgH2Xy8M78a6"; 
         
-        // 設定 QR Code 的有效時限（單位：秒，這裡設定 60 秒）
-        const expireSeconds = 60; 
+        // 設定 QR Code 的有效時限（考慮到網路載入，建議設定 70 秒，防弊效果最好）
+        const expireSeconds = 70; 
 
-        // 取得網址參數中的時間戳記 (t)
+        // 1. 取得網址參數中的時間戳記 (t)
         const urlParams = new URLSearchParams(window.location.search);
-        const qrcodeTime = parseInt(urlParams.get('t')); // 這是秒級時間戳記
+        const qrcodeTime = parseInt(urlParams.get('t'), 10); 
 
-        const currentTime = Math.floor(Date.now() / 1000); // 取得手機當前時間
+        // 2. 取得手機當前時間
+        const currentTime = Math.floor(Date.now() / 1000); 
 
         const statusTitle = document.getElementById('status-title');
         const statusDesc = document.getElementById('status-desc');
 
+        // 3. 核心防弊驗證邏輯
         if (!qrcodeTime || isNaN(qrcodeTime)) {
-            // 如果網址沒有帶時間參數，直接拒絕
-            statusTitle.innerHTML = "驗證失敗";
+            // 狀況 A：網址沒有帶時間參數（自己打網址或從歷史紀錄點入）
+            statusTitle.innerHTML = "❌ 驗證失敗";
             statusTitle.className = "error";
-            statusDesc.innerHTML = "無效的掃描方式，請至服務台現場掃描動態 QR Code。";
+            statusDesc.innerHTML = "無效的掃描方式，請至服務台重新掃描最新的QR Code";
+
         } else if (currentTime - qrcodeTime > expireSeconds) {
-            // 如果時間差大於設定秒數，判定為過期（過期或拍回家掃）
-            statusTitle.innerHTML = "QR Code 已過期";
+            // 狀況 B：時間差大於設定秒數（QR Code 已更新，或是拍回家、傳給別人的過期連結）
+            statusTitle.innerHTML = "⏰ QR Code 已過期";
             statusTitle.className = "error";
-            statusDesc.innerHTML = "此條碼已失效（超過 60 秒），請在服務台螢幕前重新掃描。";
+            statusDesc.innerHTML = "此條碼已失效，請至服務台重新掃描最新的 QR Code";
+
         } else {
-            // 驗證通過，準備跳轉
-            statusTitle.innerHTML = "驗證成功！";
-            statusTitle.className = "success";
-            statusDesc.innerHTML = "正在為您安全導向至登陸表單...";
+            // 狀況 C：時間戳記在 70 秒內，但要檢查這組時間戳記是不是已經被這台手機「用過」了
+            const lastUsedToken = localStorage.getItem('last_scanned_t');
             
-            // 1.5 秒後自動跳轉到 Google 表單
-            setTimeout(() => {
-                window.location.href = targetFormUrl;
-            }, 1500);
+            if (lastUsedToken === String(qrcodeTime)) {
+                // 如果這台手機已經拿這組 t 參數成功跳轉過，就不准他刷新網頁重複填寫
+                statusTitle.innerHTML = "❌ 請勿重複填寫";
+                statusTitle.className = "error";
+                statusDesc.innerHTML = "系統偵測到頁面重新整理。若需再次填寫，請重新掃描螢幕上的新條碼。";
+            } else {
+                // 狀況 D：完全符合資格！新鮮掃描進來的。
+                
+                // 密技：在跳轉前，立刻把這次的 qrcodeTime 存入快取鎖定！
+                localStorage.setItem('last_scanned_t', qrcodeTime);
+
+                statusTitle.innerHTML = "🎉 驗證成功！";
+                statusTitle.className = "success";
+                statusDesc.innerHTML = "正在為您安全導向至登陸表單...";
+                
+                // 1.5 秒後自動跳轉到 Google 表單
+                setTimeout(() => {
+                    window.location.href = targetFormUrl;
+                }, 1500);
+            }
         }
     </script>
 </body>
