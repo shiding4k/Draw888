@@ -24,17 +24,16 @@
         .error { color: #e74c3c; font-weight: bold; font-size: 1.5em; }
         .success { color: #2ecc71; font-weight: bold; font-size: 1.2em; }
         
-        /* 隱藏預設的表單外框，驗證成功後才會顯示 */
         #iframe-wrapper {
             display: none;
             width: 100%;
             max-width: 640px;
             margin: 20px auto 0 auto;
-            height: 80vh; /* 佔據螢幕高度的 80% */
+            height: 80vh;
             border-radius: 10px;
             box-shadow: 0 4px 10px rgba(0,0,0,0.15);
             overflow: hidden;
-            -webkit-overflow-scrolling: touch; /* 讓 iOS 滑動更順暢 */
+            -webkit-overflow-scrolling: touch;
         }
         iframe {
             width: 100%;
@@ -51,70 +50,73 @@
         <p id="status-desc">請稍候，系統正在確認您是否在服務台現場。</p>
     </div>
 
-    <!-- Google 表單內嵌視窗區塊（預設隱藏） -->
+    <!-- Google 表單內嵌視窗區塊 -->
     <div id="iframe-wrapper">
-        <iframe id="form-iframe" src="" allow="geolocation">正在載入表單...</iframe>
+        <iframe id="form-iframe" src="">正在載入表單...</iframe>
     </div>
 
     <script>
-        // 【請確認這裡的 Google 表單網址是否正確】
-        // 建議填寫表單的完整共用連結
+        // ⚠️ 這裡必須填寫從 Google 表單「<> 內嵌HTML」複製出來的完整長網址！
+        // 絕對不能填寫 https://forms.gle/... 短網址
         const targetFormUrl = "https://docs.google.com/forms/d/e/1FAIpQLSftUqAeKoe1Jl5B9gT2cY97gpJM4w3OYdxa37OZrY3tWUDyfw/viewform?embedded=true"; 
         
-        // 設定 QR Code 的有效時限（建議 70 秒，容許網路跟手機時間的些微誤差）
+        // 有效時限（秒）
         const expireSeconds = 70; 
 
-        // 1. 取得網址參數中的時間戳記 (t)
-        const urlParams = new URLSearchParams(window.location.search);
-        const qrcodeTime = parseInt(urlParams.get('t'), 10); 
+        // 確保網頁載入後才執行
+        window.addEventListener('load', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const qrcodeTime = parseInt(urlParams.get('t'), 10); 
+            const currentTime = Math.floor(Date.now() / 1000); 
 
-        // 2. 取得手機當前時間
-        const currentTime = Math.floor(Date.now() / 1000); 
+            const statusTitle = document.getElementById('status-title');
+            const statusDesc = document.getElementById('status-desc');
+            const iframeWrapper = document.getElementById('iframe-wrapper');
+            const formIframe = document.getElementById('form-iframe');
 
-        const statusContainer = document.getElementById('status-container');
-        const statusTitle = document.getElementById('status-title');
-        const statusDesc = document.getElementById('status-desc');
-        const iframeWrapper = document.getElementById('iframe-wrapper');
-        const formIframe = document.getElementById('form-iframe');
-
-        // 3. 核心防弊驗證邏輯
-        if (!qrcodeTime || isNaN(qrcodeTime)) {
-            // 狀況 A：網址沒有帶時間參數
-            statusTitle.innerHTML = "❌ 驗證失敗";
-            statusTitle.className = "error";
-            statusDesc.innerHTML = "無效的掃描方式，請至服務台現場掃描動態 QR Code";
-
-        } else if (currentTime - qrcodeTime > expireSeconds) {
-            // 狀況 B：時間差大於 70 秒（條碼已更新，或是拍回家、外流的連結）
-            statusTitle.innerHTML = "⏰ QR Code 已過期";
-            statusTitle.className = "error";
-            statusDesc.innerHTML = "此條碼已失效，請至服務台重新掃描QR Code。;
-
-        } else {
-            // 狀況 C：檢查這組時間戳記是不是已經被這台手機「用過」了
-            const lastUsedToken = localStorage.getItem('last_scanned_t');
-            
-            if (lastUsedToken === String(qrcodeTime)) {
-                // 如果這台手機已經拿這組 t 參數成功開啟過，就不准他手動重新整理網頁
-                statusTitle.innerHTML = "⚠️";
+            // 檢查參數是否存在與合法
+            if (!qrcodeTime || isNaN(qrcodeTime)) {
+                statusTitle.innerHTML = "❌ 驗證失敗";
                 statusTitle.className = "error";
-                statusDesc.innerHTML = "若需再次填寫，請至服務台重新掃描QR code";
-            } else {
-                // 狀況 D：完全符合現場資格！新鮮掃描進來的。
-                
-                // 關鍵：立刻把這次的 qrcodeTime 存入快取鎖定！防止他重新整理
-                localStorage.setItem('last_scanned_t', qrcodeTime);
+                statusDesc.innerHTML = "無效的掃描方式，請至服務台掃描QR Code";
+                return;
+            }
+
+            // 檢查是否過期
+            if (currentTime - qrcodeTime > expireSeconds) {
+                statusTitle.innerHTML = "⏰ QR Code 已過期";
+                statusTitle.className = "error";
+                statusDesc.innerHTML = "此條碼已失效，請至服務台重新掃描QR Code";
+                return;
+            }
+
+            // 檢查是否重複整理
+            const lastUsedToken = localStorage.getItem('last_scanned_t');
+            if (lastUsedToken && lastUsedToken === String(qrcodeTime)) {
+                statusTitle.innerHTML = "❌ 請勿重複填寫";
+                statusTitle.className = "error";
+                statusDesc.innerHTML = "若需再次填寫，請至服務台重新掃描QR Code";
+                return;
+            }
+
+            // ─── 通過驗證，顯示表單 ───
+            try {
+                // 先鎖定這次的時間戳記
+                localStorage.setItem('last_scanned_t', String(qrcodeTime));
 
                 statusTitle.innerHTML = "🎉跨櫃買滿888，全家好禮週週發";
                 statusTitle.className = "success";
-                statusDesc.innerHTML = "請在下方填寫抽獎資料;
+                statusDesc.innerHTML = "請填寫抽獎活動表單";
                 
-                // 動態將 Google 表單網址塞入 iframe，並展現出來
-                // 提示：你也可以把你原本的 "https://forms.gle/..." 貼在 targetFormUrl 中，系統會自動處理
+                // 載入並顯示表單
                 formIframe.src = targetFormUrl;
-                iframeWrapper.style.display = "block"; 
+                iframeWrapper.style.display = "block";
+            } catch (error) {
+                // 萬一發生非預期錯誤，改為直接彈出通知並跳轉，不讓畫面卡死
+                console.error(error);
+                window.location.href = targetFormUrl;
             }
-        }
+        });
     </script>
 </body>
 </html>
