@@ -96,9 +96,9 @@
             
             if (lastUsedToken === String(qrcodeTime)) {
                 // 如果這台手機已經拿這組 t 參數成功開啟過，就不准他手動重新整理網頁
-                statusTitle.innerHTML = "❌ 請勿重複填寫";
+                statusTitle.innerHTML = "⚠️";
                 statusTitle.className = "error";
-                statusDesc.innerHTML = "系統偵測到頁面重新整理。若需再次填寫，請重新掃描螢幕上的新條碼。";
+                statusDesc.innerHTML = "若需再次填寫，請至服務台重新掃描新QRcode。";
             } else {
                 // 狀況 D：完全符合現場資格！新鮮掃描進來的。
                 
