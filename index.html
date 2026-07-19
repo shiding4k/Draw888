@@ -82,13 +82,13 @@
             // 狀況 A：網址沒有帶時間參數
             statusTitle.innerHTML = "❌ 驗證失敗";
             statusTitle.className = "error";
-            statusDesc.innerHTML = "無效的掃描方式，請至服務台現場掃描動態 QR Code。";
+            statusDesc.innerHTML = "無效的掃描方式，請至服務台現場掃描動態 QR Code";
 
         } else if (currentTime - qrcodeTime > expireSeconds) {
             // 狀況 B：時間差大於 70 秒（條碼已更新，或是拍回家、外流的連結）
             statusTitle.innerHTML = "⏰ QR Code 已過期";
             statusTitle.className = "error";
-            statusDesc.innerHTML = "此條碼已失效，請至服務台大螢幕前重新掃描最新的 QR Code。";
+            statusDesc.innerHTML = "此條碼已失效，請至服務台重新掃描QR Code。;
 
         } else {
             // 狀況 C：檢查這組時間戳記是不是已經被這台手機「用過」了
@@ -98,16 +98,16 @@
                 // 如果這台手機已經拿這組 t 參數成功開啟過，就不准他手動重新整理網頁
                 statusTitle.innerHTML = "⚠️";
                 statusTitle.className = "error";
-                statusDesc.innerHTML = "若需再次填寫，請至服務台重新掃描新QRcode。";
+                statusDesc.innerHTML = "若需再次填寫，請至服務台重新掃描QR code";
             } else {
                 // 狀況 D：完全符合現場資格！新鮮掃描進來的。
                 
                 // 關鍵：立刻把這次的 qrcodeTime 存入快取鎖定！防止他重新整理
                 localStorage.setItem('last_scanned_t', qrcodeTime);
 
-                statusTitle.innerHTML = "🎉 驗證成功！";
+                statusTitle.innerHTML = "🎉跨櫃買滿888，全家好禮週週發";
                 statusTitle.className = "success";
-                statusDesc.innerHTML = "請在下方直接填寫活動表單。";
+                statusDesc.innerHTML = "請在下方填寫抽獎資料;
                 
                 // 動態將 Google 表單網址塞入 iframe，並展現出來
                 // 提示：你也可以把你原本的 "https://forms.gle/..." 貼在 targetFormUrl 中，系統會自動處理
