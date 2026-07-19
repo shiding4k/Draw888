@@ -76,7 +76,7 @@
 
             // 檢查參數是否存在與合法
             if (!qrcodeTime || isNaN(qrcodeTime)) {
-                statusTitle.innerHTML = "❌ 驗證失敗";
+                statusTitle.innerHTML = "⚠️驗證失敗";
                 statusTitle.className = "error";
                 statusDesc.innerHTML = "無效的掃描方式，請至服務台掃描QR Code";
                 return;
@@ -93,7 +93,7 @@
             // 檢查是否重複整理
             const lastUsedToken = localStorage.getItem('last_scanned_t');
             if (lastUsedToken && lastUsedToken === String(qrcodeTime)) {
-                statusTitle.innerHTML = "❌ 請勿重複填寫";
+                statusTitle.innerHTML = "⚠️請勿重複填寫";
                 statusTitle.className = "error";
                 statusDesc.innerHTML = "若需再次填寫，請至服務台重新掃描QR Code";
                 return;
